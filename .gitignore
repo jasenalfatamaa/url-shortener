@@ -1,0 +1,11 @@
+# Python Environment (Backend)
+/backend/venv/
+/backend/__pycache__/
+/backend/.env
+
+# Node Modules (Frontend - Akan dibuat nanti)
+/url-shortener-frontend/node_modules/
+/url-shortener-frontend/dist/
+
+# Kredensial & File Lokal
+.env
