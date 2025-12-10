@@ -1,0 +1,63 @@
+version: '3.8'
+
+# Menggunakan file .env di root untuk mengambil semua variabel (DB_USER, FLASK_PORT, dll.)
+#env_file:
+#  - .env
+
+services:
+  # 1. SERVICE POSTGRESQL (db)
+  db:
+    image: postgres:14-alpine
+    restart: always
+    env_file:
+      - .env
+    environment:
+      # Mengambil nilai dari .env yang didefinisikan di 'env_file' di atas
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      # Volume untuk menyimpan data DB secara permanen
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # Cek kesehatan: memastikan DB siap sebelum Flask dijalankan
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. SERVICE REDIS (redis)
+  redis:
+    image: redis:7-alpine
+    restart: always
+    # Tidak perlu environment di sini, Redis default sudah baik
+
+  # 3. SERVICE FLASK BACKEND (web)
+  web:
+    build: 
+      # Context menunjuk ke folder yang berisi Dockerfile (folder 'backend')
+      context: ./backend 
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      # Map port Host (dari .env) ke port Container (5003)
+      - "${FLASK_PORT}:5003" 
+    depends_on:
+      db:
+        condition: service_healthy # Hanya jalan jika DB sehat
+      redis:
+        condition: service_started # Hanya jalan jika Redis siap
+    env_file:
+      - .env
+    environment:
+      # Menyuntikkan URI koneksi yang mengacu pada nama service 'db' dan 'redis'
+      SQLALCHEMY_DATABASE_URI: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      LIMITER_STORAGE_URI: redis://redis:6379
+      FLASK_PORT: ${FLASK_PORT} # Menyediakan variabel FLASK_PORT ke aplikasi
+    volumes:
+      # Mounting kode lokal: Penting untuk development agar perubahan kode langsung terlihat
+      - ./backend:/app 
+
+volumes:
+  # Definisi volume untuk persistensi data PostgreSQL
+  postgres_data:

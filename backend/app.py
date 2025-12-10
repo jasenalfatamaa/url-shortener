@@ -10,7 +10,8 @@ from config import Config
 
 # inisialisasi Ekstensi
 db = SQLAlchemy()
-redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT)
+# redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT)
+redis_client = redis.Redis.from_url(Config.LIMITER_STORAGE_URI)
 limiter = Limiter(
     key_func=get_remote_address,
     app=None,
