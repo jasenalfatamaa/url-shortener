@@ -30,13 +30,15 @@ test('renders headline', () => {
 
 test('activates demo mode when backend is unreachable', async () => {
     render(<App />)
-    // Wait for the demo mode badge to appear
+    // Wait for the demo mode badge to appear (handles the async checkConnectivity)
     const demoBadge = await screen.findByText(/DEMO MODE ACTIVE/i)
     expect(demoBadge).toBeInTheDocument()
 })
 
-test('updates input value on change', () => {
+test('updates input value on change', async () => {
     render(<App />)
+    // Wait for initial async state update to settle
+    await screen.findByText(/DEMO MODE ACTIVE/i)
     const input = screen.getByPlaceholderText(/ENTER TARGET DATA/i) as HTMLInputElement
     fireEvent.change(input, { target: { value: 'https://google.com' } })
     expect(input.value).toBe('https://google.com')
@@ -44,13 +46,17 @@ test('updates input value on change', () => {
 
 test('generates mock URL in demo mode', async () => {
     render(<App />)
+    // Ensure we are in demo mode before clicking
+    await screen.findByText(/DEMO MODE ACTIVE/i)
+
     const input = screen.getByPlaceholderText(/ENTER TARGET DATA/i)
     const button = screen.getByRole('button', { name: /SHORTEN/i })
 
     fireEvent.change(input, { target: { value: 'https://google.com' } })
     fireEvent.click(button)
 
-    const result = await screen.findByText(/demo\.archlinks\.com/i)
+    // The demo delay is 800ms, increase timeout to be safe
+    const result = await screen.findByText(/demo\.archlinks\.com/i, {}, { timeout: 3000 })
     expect(result).toBeInTheDocument()
 })
 
@@ -63,6 +69,8 @@ test('share button calls navigator.share', async () => {
     })
 
     render(<App />)
+    // Ensure we are in demo mode
+    await screen.findByText(/DEMO MODE ACTIVE/i)
 
     // First trigger shorten to show the result card
     const input = screen.getByPlaceholderText(/ENTER TARGET DATA/i)
@@ -70,7 +78,8 @@ test('share button calls navigator.share', async () => {
     fireEvent.change(input, { target: { value: 'https://google.com' } })
     fireEvent.click(button)
 
-    const shareButton = await screen.findByRole('button', { name: /SHARE/i })
+    // Wait for result card to appear
+    const shareButton = await screen.findByRole('button', { name: /SHARE/i }, { timeout: 3000 })
     fireEvent.click(shareButton)
 
     expect(shareMock).toHaveBeenCalled()
