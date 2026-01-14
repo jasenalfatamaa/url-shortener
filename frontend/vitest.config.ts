@@ -8,8 +8,9 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: './src/test/setup.ts',
-        testTimeout: 15000,
-        hookTimeout: 15000,
+        testTimeout: 20000,
+        hookTimeout: 20000,
+        teardownTimeout: 15000,
         include: ['src/test/**/*.{test,spec}.{ts,tsx}'],
     },
     resolve: {

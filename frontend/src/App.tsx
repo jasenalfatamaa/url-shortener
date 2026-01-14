@@ -163,7 +163,7 @@ export default function App() {
         {/* Glowing Input Form */}
         <motion.div
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-3xl mb-32 relative mt-12 px-2"
+          className="w-full max-w-3xl mb-32 relative mt-12"
         >
           {/* Glowing White Outline Frame */}
           <div className="absolute -inset-[2px] bg-white opacity-20 blur-[1px] pointer-events-none" />
@@ -200,7 +200,7 @@ export default function App() {
           {shortUrl && (
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-              className="w-full max-w-2xl mb-16 px-2"
+              className="w-full max-w-2xl mb-16"
               data-testid="result-card"
             >
               <div className="p-6 md:p-8 border-2 border-[#D4AF37]/30 bg-[#161719]/80 backdrop-blur-xl text-center relative shadow-[0_0_40px_rgba(212,175,55,0.1)]">
