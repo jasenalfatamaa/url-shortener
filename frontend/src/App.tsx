@@ -50,7 +50,7 @@ export default function App() {
 
     if (isDemo) {
       // Simulate backend delay (skip in tests for stability)
-      const isTest = import.meta.env.MODE === 'test' || import.meta.env.VITEST;
+      const isTest = import.meta.env.MODE === 'test' || import.meta.env.VITEST || !!(globalThis as any).vi;
       if (!isTest) {
         await new Promise(resolve => setTimeout(resolve, 800))
       }
@@ -170,6 +170,7 @@ export default function App() {
           <div className="absolute -inset-2 border border-white/20 pointer-events-none shadow-[0_0_30px_rgba(255,255,255,0.1)]" />
 
           <form
+            aria-label="shorten-form"
             onSubmit={handleShorten}
             className="relative flex flex-col md:flex-row bg-[#111214]/90 backdrop-blur-3xl border border-white shadow-[0_10px_50px_rgba(0,0,0,0.5)]"
           >
