@@ -23,21 +23,21 @@ vi.mock('framer-motion', () => {
 // Mock global fetch for connectivity check
 vi.stubGlobal('fetch', vi.fn(() => Promise.reject('Connectivity check failure')));
 
-test('renders headline', () => {
+test('renders headline', async () => {
     render(<App />)
     expect(screen.getByRole('heading', { name: /ARCHITECTURAL/i })).toBeInTheDocument()
+    // Wait for initial async state to settle to avoid act warning
+    await screen.findByText(/DEMO MODE ACTIVE/i)
 })
 
 test('activates demo mode when backend is unreachable', async () => {
     render(<App />)
-    // Wait for the demo mode badge to appear (handles the async checkConnectivity)
     const demoBadge = await screen.findByText(/DEMO MODE ACTIVE/i)
     expect(demoBadge).toBeInTheDocument()
 })
 
 test('updates input value on change', async () => {
     render(<App />)
-    // Wait for initial async state update to settle
     await screen.findByText(/DEMO MODE ACTIVE/i)
     const input = screen.getByPlaceholderText(/ENTER TARGET DATA/i) as HTMLInputElement
     fireEvent.change(input, { target: { value: 'https://google.com' } })
@@ -46,16 +46,14 @@ test('updates input value on change', async () => {
 
 test('generates mock URL in demo mode', async () => {
     render(<App />)
-    // Ensure we are in demo mode before clicking
     await screen.findByText(/DEMO MODE ACTIVE/i)
 
     const input = screen.getByPlaceholderText(/ENTER TARGET DATA/i)
-    const button = screen.getByRole('button', { name: /SHORTEN/i })
+    const form = input.closest('form')!
 
     fireEvent.change(input, { target: { value: 'https://google.com' } })
-    fireEvent.click(button)
+    fireEvent.submit(form)
 
-    // The demo delay is 800ms, increase timeout to be safe
     const result = await screen.findByText(/demo\.archlinks\.com/i, {}, { timeout: 3000 })
     expect(result).toBeInTheDocument()
 })
@@ -69,16 +67,13 @@ test('share button calls navigator.share', async () => {
     })
 
     render(<App />)
-    // Ensure we are in demo mode
     await screen.findByText(/DEMO MODE ACTIVE/i)
 
-    // First trigger shorten to show the result card
     const input = screen.getByPlaceholderText(/ENTER TARGET DATA/i)
-    const button = screen.getByRole('button', { name: /SHORTEN/i })
+    const form = input.closest('form')!
     fireEvent.change(input, { target: { value: 'https://google.com' } })
-    fireEvent.click(button)
+    fireEvent.submit(form)
 
-    // Wait for result card to appear
     const shareButton = await screen.findByRole('button', { name: /SHARE/i }, { timeout: 3000 })
     fireEvent.click(shareButton)
 

@@ -49,8 +49,10 @@ export default function App() {
     setIsLoading(true)
 
     if (isDemo) {
-      // Simulate backend delay
-      await new Promise(resolve => setTimeout(resolve, 800))
+      // Simulate backend delay (skip in tests)
+      if (!import.meta.env.VITEST) {
+        await new Promise(resolve => setTimeout(resolve, 800))
+      }
       const fakeCode = Math.random().toString(36).substring(2, 7)
       setShortUrl(`http://demo.archlinks.com/${fakeCode}`)
       setIsLoading(false)
