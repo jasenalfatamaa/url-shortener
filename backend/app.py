@@ -5,18 +5,87 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask import redirect, abort, request, jsonify
+from flask_cors import CORS
 
 from config import Config
 
 # inisialisasi Ekstensi
 db = SQLAlchemy()
-# redis_client = redis.Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT)
-redis_client = redis.Redis.from_url(Config.LIMITER_STORAGE_URI)
-limiter = Limiter(
-    key_func=get_remote_address,
-    app=None,
-    storage_uri=Config.LIMITER_STORAGE_URI
-)
+redis_client = None
+limiter = Limiter(key_func=get_remote_address)
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+
+    # inisialisasi ekstensi dengan aplikasi FLask
+    db.init_app(app)
+    
+    storage_uri = app.config.get('LIMITER_STORAGE_URI', 'redis://redis:6379')
+    global redis_client
+    if storage_uri.startswith('redis'):
+        redis_client = redis.Redis.from_url(storage_uri)
+    else:
+        # Mock redis client untuk testing tanpa redis beneran
+        class FakeRedis:
+            def setex(self, *args, **kwargs): pass
+            def get(self, *args, **kwargs): return None
+        redis_client = FakeRedis()
+    
+    limiter.init_app(app)
+    limiter.storage_uri = storage_uri
+    
+    CORS(app) # Enable CORS for all routes
+
+    with app.app_context():
+        if not app.config.get('TESTING'):
+            db.create_all()
+            
+    # Import and register routes inside factory to avoid global app issues
+    register_routes(app)
+    
+    return app
+
+def register_routes(app):
+    @app.route('/api/v1/shorten', methods=['POST'])
+    @limiter.limit("5 per minute")
+    def shorten_url():
+        data = request.get_json()
+        long_url = data.get('long_url')
+
+        if not long_url:
+            return jsonify({"error": "long_url is required"}), 400
+        
+        for _ in range(5): 
+            short_code = generate_random_code()
+            if not URLMapping.query.filter_by(short_code=short_code).first():
+                try:
+                    new_mapping = URLMapping(long_url=long_url, short_code=short_code)
+                    db.session.add(new_mapping)
+                    db.session.commit()
+                    redis_client.setex(short_code, 86400, long_url)
+                    return jsonify({
+                        "short_url": f"http://localhost:{Config.FLASK_PORT}/{short_code}",
+                        "short_code": short_code
+                    }), 201
+                except Exception as e:
+                    db.session.rollback()
+                    return jsonify({"error": "Internal Server Error"}), 500
+        return jsonify({"error": "Failed to generate unique short code after multiple attempts"}), 503
+
+    @app.route('/<short_code>', methods=['GET'])
+    def redirect_to_long_url(short_code):
+        long_url_from_cache = redis_client.get(short_code)
+        if long_url_from_cache:
+            return redirect(long_url_from_cache.decode('utf-8'))
+        mapping = URLMapping.query.filter_by(short_code=short_code).first()
+        if mapping:
+            redis_client.setex(short_code, 86400, mapping.long_url)
+            mapping.click_count += 1
+            db.session.commit()
+            return redirect(mapping.long_url)
+        else:
+            abort(404)
 
 # Model Database
 class URLMapping(db.Model):
@@ -26,119 +95,14 @@ class URLMapping(db.Model):
     click_count = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=db.func.now())
 
-    def __repr__(self):
-        return f"<URLMapping {self.short_code}>"
-
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object(Config)
-
-    # inisialisasi ekstensi dengan aplikasi FLask
-    db.init_app(app)
-    limiter.init_app(app)
-
-    # import dan registrasi blueprint/routes akan di tahap selanjutnya
-
-    with app.app_context():
-
-        db.create_all()
-    return app
-
-app = create_app()
-    
-
 BASE62_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 def generate_random_code():
-    # Menghasilkan short code acak dengan panjang bervariasi secara acak antara 4, 5, atau 6 karakter.
     length = random.randint(4,6)
-
     return ''.join(random.choice(BASE62_CHARS) for _ in range(length))
-    
 
-def base62_encode(num):
-    """mengonversi ID integer menjadi string base62"""
-    if num == 0:
-        return BASE62_CHARS[0]
-    
-    encoded = ""
-    base = len(BASE62_CHARS)
-    while num > 0:
-        encoded = BASE62_CHARS[num % base] + encoded
-        num //= base
-    return encoded
-
-
-@app.route('/api/v1/shorten', methods=['POST'])
-@limiter.limit("5 per minute")
-def shorten_url():
-    data = request.get_json()
-    long_url = data.get('long_url')
-
-    if not long_url:
-        return jsonify({"error": "long_url is required"}), 400
-    
-    for _ in range(5): 
-        short_code = generate_random_code()
-
-        # cek apakah kode sudah ada di DB
-        if not URLMapping.query.filter_by(short_code=short_code).first():
-
-            try:
-                # Simpan URL Panjang ke DB (tanpa short_code)
-                new_mapping = URLMapping(long_url=long_url, short_code=short_code)
-                db.session.add(new_mapping)
-                db.session.commit()
-
-                # simpan juga ke redis (optional: pre-caching)
-                redis_client.setex(short_code, 86400, long_url)
-
-                return jsonify({
-                    "short_url": f"http://localhost:5003/{short_code}",
-                    "short_code": short_code
-                }), 201
-
-            except Exception as e:
-                db.session.rollback()
-                return jsonify({"error": "Internal Server Error"}), 500
-    
-    return jsonify({"error": "Failed to generate unique short code after multiple attempts"}), 503
-
-
-@app.route('/<short_code>', methods=['GET'])
-def redirect_to_long_url(short_code):
-
-    # 1. Cache Check (Redis) - Layer 1 (Tercepat)
-    long_url_from_cache = redis_client.get(short_code)
-    if long_url_from_cache:
-        print(f"CAHCE HIT for {short_code}")
-        return redirect(long_url_from_cache.decode('utf-8'))
-
-    # 2. Database Check (PostgreSQL) - Layer 2
-    mapping = URLMapping.query.filter_by(short_code=short_code).first()
-
-    if mapping:
-        # 3. update cache
-        redis_client.setex(short_code,86400, mapping.long_url)
-
-        # 4. Update click count
-        mapping.click_count += 1
-        db.session.commit()
-
-        # 5. Redirect
-        return redirect(mapping.long_url)
-    
-    else:
-        abort(404)
-    
-
-
-
-@app.route('/test', methods=['GET'])
-def test_route():
-    return "Server is running!"
-
+# app = create_app()
 
 if __name__ == '__main__':
-    
-    app.run(debug=True, port=5003)
+    app = create_app()
+    app.run(host='0.0.0.0', port=5003)

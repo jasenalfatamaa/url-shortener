@@ -17,9 +17,18 @@ Content-Type: application/json
 
 
 ### testing ke url postgresql
-POST http://127.0.0.1:5003/api/v1/shorten
+POST http://172.19.144.1:8888/api/v1/shorten
 Content-Type: application/json
 
 {
   "long_url": "https://www.enterprisedb.com/downloads/postgres-postgresql-downloads"
+}
+
+
+###
+POST http://0.0.0.0:8888/api/v1/shorten
+Content-Type: application/json
+
+{
+    "long_url": "https://www.testing-docker-crash.com"
 }

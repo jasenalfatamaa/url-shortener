@@ -11,6 +11,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Salin sisa kode aplikasi Flask
 COPY . .
 
+# Jalankan testing sebelum build dianggap berhasil
+# Kita gunakan sqlite in-memory untuk testing agar tidak butuh DB beneran saat build
+RUN PYTHONPATH=. pytest tests/test_app.py
+
 # Port yang digunakan oleh Flask (untuk dokumentasi)
 EXPOSE 5003
 

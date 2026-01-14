@@ -21,7 +21,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       # Cek kesehatan: memastikan DB siap sebelum Flask dijalankan
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -32,16 +32,16 @@ services:
     restart: always
     # Tidak perlu environment di sini, Redis default sudah baik
 
-  # 3. SERVICE FLASK BACKEND (web)
-  web:
-    build: 
+    # 3. SERVICE FLASK BACKEND (web)
+  backend:
+    build:
       # Context menunjuk ke folder yang berisi Dockerfile (folder 'backend')
-      context: ./backend 
+      context: ./backend
       dockerfile: Dockerfile
     restart: always
     ports:
       # Map port Host (dari .env) ke port Container (5003)
-      - "${FLASK_PORT}:5003" 
+      - "${FLASK_PORT}:5003"
     depends_on:
       db:
         condition: service_healthy # Hanya jalan jika DB sehat
@@ -56,7 +56,18 @@ services:
       FLASK_PORT: ${FLASK_PORT} # Menyediakan variabel FLASK_PORT ke aplikasi
     volumes:
       # Mounting kode lokal: Penting untuk development agar perubahan kode langsung terlihat
-      - ./backend:/app 
+      - ./backend:/app
+
+  # 4. SERVICE FRONTEND (ui)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3050:80"
+    depends_on:
+      - backend
 
 volumes:
   # Definisi volume untuk persistensi data PostgreSQL
