@@ -49,8 +49,9 @@ export default function App() {
     setIsLoading(true)
 
     if (isDemo) {
-      // Simulate backend delay (skip in tests)
-      if (!import.meta.env.VITEST) {
+      // Simulate backend delay (skip in tests for stability)
+      const isTest = import.meta.env.MODE === 'test' || import.meta.env.VITEST;
+      if (!isTest) {
         await new Promise(resolve => setTimeout(resolve, 800))
       }
       const fakeCode = Math.random().toString(36).substring(2, 7)

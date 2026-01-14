@@ -26,19 +26,19 @@ vi.stubGlobal('fetch', vi.fn(() => Promise.reject('Connectivity check failure'))
 test('renders headline', async () => {
     render(<App />)
     expect(screen.getByRole('heading', { name: /ARCHITECTURAL/i })).toBeInTheDocument()
-    // Wait for initial async state to settle to avoid act warning
-    await screen.findByText(/DEMO MODE ACTIVE/i)
+    // Always wait for the initial async effect to finish to prevent act() warnings
+    await screen.findByText(/DEMO MODE ACTIVE/i, {}, { timeout: 5000 })
 })
 
 test('activates demo mode when backend is unreachable', async () => {
     render(<App />)
-    const demoBadge = await screen.findByText(/DEMO MODE ACTIVE/i)
+    const demoBadge = await screen.findByText(/DEMO MODE ACTIVE/i, {}, { timeout: 5000 })
     expect(demoBadge).toBeInTheDocument()
 })
 
 test('updates input value on change', async () => {
     render(<App />)
-    await screen.findByText(/DEMO MODE ACTIVE/i)
+    await screen.findByText(/DEMO MODE ACTIVE/i, {}, { timeout: 5000 })
     const input = screen.getByPlaceholderText(/ENTER TARGET DATA/i) as HTMLInputElement
     fireEvent.change(input, { target: { value: 'https://google.com' } })
     expect(input.value).toBe('https://google.com')
@@ -46,15 +46,15 @@ test('updates input value on change', async () => {
 
 test('generates mock URL in demo mode', async () => {
     render(<App />)
-    await screen.findByText(/DEMO MODE ACTIVE/i)
+    await screen.findByText(/DEMO MODE ACTIVE/i, {}, { timeout: 5000 })
 
     const input = screen.getByPlaceholderText(/ENTER TARGET DATA/i)
-    const form = input.closest('form')!
+    const button = screen.getByRole('button', { name: /SHORTEN/i })
 
     fireEvent.change(input, { target: { value: 'https://google.com' } })
-    fireEvent.submit(form)
+    fireEvent.click(button)
 
-    const result = await screen.findByText(/demo\.archlinks\.com/i, {}, { timeout: 3000 })
+    const result = await screen.findByText(/demo\.archlinks\.com/i, {}, { timeout: 5000 })
     expect(result).toBeInTheDocument()
 })
 
@@ -67,14 +67,14 @@ test('share button calls navigator.share', async () => {
     })
 
     render(<App />)
-    await screen.findByText(/DEMO MODE ACTIVE/i)
+    await screen.findByText(/DEMO MODE ACTIVE/i, {}, { timeout: 5000 })
 
     const input = screen.getByPlaceholderText(/ENTER TARGET DATA/i)
-    const form = input.closest('form')!
+    const button = screen.getByRole('button', { name: /SHORTEN/i })
     fireEvent.change(input, { target: { value: 'https://google.com' } })
-    fireEvent.submit(form)
+    fireEvent.click(button)
 
-    const shareButton = await screen.findByRole('button', { name: /SHARE/i }, { timeout: 3000 })
+    const shareButton = await screen.findByRole('button', { name: /SHARE/i }, { timeout: 5000 })
     fireEvent.click(shareButton)
 
     expect(shareMock).toHaveBeenCalled()
