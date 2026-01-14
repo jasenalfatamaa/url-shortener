@@ -50,7 +50,7 @@ export default function App() {
 
     if (isDemo) {
       // Simulate backend delay (skip in tests for stability)
-      const isTest = import.meta.env.MODE === 'test' || import.meta.env.VITEST || !!(globalThis as any).vi;
+      const isTest = (typeof window !== 'undefined' && (window as any).vi) || (globalThis as any).vi;
       if (!isTest) {
         await new Promise(resolve => setTimeout(resolve, 800))
       }
@@ -180,11 +180,13 @@ export default function App() {
               onChange={(e) => setUrl(e.target.value)}
               placeholder="ENTER TARGET DATA (URL)..."
               required
+              data-testid="url-input"
               className="flex-1 bg-transparent border-none focus:ring-0 py-4 md:py-6 px-4 md:px-8 text-white text-[10px] md:text-xs font-black tracking-[0.2em] uppercase placeholder:text-white/20 min-w-0"
             />
             <button
               type="submit"
               disabled={isLoading}
+              data-testid="shorten-button"
               className="bg-[#D4C4B0]/20 hover:bg-[#D4C4B0] text-[#D4C4B0] hover:text-[#000] border-t md:border-t-0 md:border-l border-white px-8 md:px-12 py-4 md:py-6 font-black tracking-[0.3em] uppercase text-[9px] md:text-[10px] transition-all duration-500 flex items-center justify-center gap-3"
             >
               {isLoading ? "..." : "SHORTEN"}
@@ -199,18 +201,29 @@ export default function App() {
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
               className="w-full max-w-2xl mb-16 px-2"
+              data-testid="result-card"
             >
               <div className="p-6 md:p-8 border-2 border-[#D4AF37]/30 bg-[#161719]/80 backdrop-blur-xl text-center relative shadow-[0_0_40px_rgba(212,175,55,0.1)]">
                 <div className="text-[9px] md:text-[10px] font-black tracking-[0.4em] md:tracking-[0.6em] uppercase text-[#D4AF37] mb-4">Construction Complete</div>
-                <div className="text-xl md:text-3xl font-header font-bold text-white mb-6 md:mb-8 tracking-wider break-all">{shortUrl}</div>
+                <div
+                  className="text-xl md:text-3xl font-header font-bold text-white mb-6 md:mb-8 tracking-wider break-all"
+                  data-testid="short-url-display"
+                >
+                  {shortUrl}
+                </div>
                 <div className="flex justify-center gap-6">
-                  <button onClick={copyToClipboard} className="flex items-center gap-2 text-[10px] font-black tracking-[0.3em] text-white/80 hover:text-white transition-all uppercase">
+                  <button
+                    onClick={copyToClipboard}
+                    data-testid="copy-button"
+                    className="flex items-center gap-2 text-[10px] font-black tracking-[0.3em] text-white/80 hover:text-white transition-all uppercase"
+                  >
                     {copied ? <CheckCircle2 size={16} className="text-green-400" /> : <Copy size={16} />}
                     {copied ? "COPIED" : "COPY"}
                   </button>
                   <div className="w-px h-4 bg-white/20" />
                   <button
                     onClick={handleShare}
+                    data-testid="share-button"
                     className="flex items-center gap-2 text-[10px] font-black tracking-[0.3em] text-white/40 hover:text-white transition-all uppercase"
                   >
                     <Share2 size={16} /> Share
