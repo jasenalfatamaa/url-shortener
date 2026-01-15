@@ -9,7 +9,7 @@ RUN npm install
 COPY . .
 
 # Jalankan testing sebelum build - ini akan menggagalkan build jika test fail
-RUN npm run test -- --run --pool=threads --poolOptions.threads.singleThread
+RUN npm run test -- --run
 
 RUN npm run build
 
