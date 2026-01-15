@@ -1,7 +1,17 @@
 # 🏛️ ARCHITECTURAL LINKS
 
-[![Frontend & Backend CI](https://github.com/your-username/url-shortener/actions/workflows/ci.yml/badge.svg)](https://github.com/jasenalfatamaa/url-shortener/actions)
+[![Frontend & Backend CI](https://github.com/jasenalfatamaa/url-shortener/actions/workflows/ci.yml/badge.svg)](https://github.com/jasenalfatamaa/url-shortener/actions)
 [![Vercel Deployment](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://archlinks.vercel.app/)
+
+![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white) 
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) 
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) 
+![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) 
+![Framer](https://img.shields.io/badge/Framer-black?style=for-the-badge&logo=framer&logoColor=blue)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white) 
+![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white) 
+![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-729B1B?style=for-the-badge&logo=vitest&logoColor=white)
 
 **Architectural Links** is a premium, cinematic URL shortening system designed with high-performance aesthetics and monolithic structural integrity. It features a reactive 3D parallax background, a self-diagnostic demo mode, and a robust microservices-ready backend.
 
