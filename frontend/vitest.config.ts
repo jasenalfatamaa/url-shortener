@@ -11,13 +11,10 @@ export default defineConfig({
         testTimeout: 20000,
         hookTimeout: 20000,
         teardownTimeout: 15000,
-        // Automatically use single thread in resource-constrained environments (Docker/CI)
-        // to prevent worker startup timeouts and CLI flag errors.
-        // @ts-ignore - Runtime property for Vitest v1.0+
-        poolOptions: {
-            threads: {
-                singleThread: true,
-            },
+        // Vitest 4: pool options are top-level
+        // @ts-ignore
+        threads: {
+            singleThread: true,
         },
         include: ['src/test/**/*.{test,spec}.{ts,tsx}'],
     },

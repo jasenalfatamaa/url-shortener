@@ -1,34 +1,38 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { expect, test, vi, beforeEach } from 'vitest'
 import App from '../App'
+import { api } from '../services/api'
 
-// Simplified mocks for framer-motion to speed up tests and reduce CPU load in CI
+// Professional Mocks: Isolation is key
 vi.mock('framer-motion', () => ({
     motion: {
-        div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+        div: ({ children, whileInView, initial, animate, exit, transition, ...props }: any) => <div {...props}>{children}</div>,
     },
     AnimatePresence: ({ children }: any) => children,
-    useSpring: () => ({ set: vi.fn(), get: vi.fn() }),
+    useSpring: () => ({ set: vi.fn(), get: vi.fn(), onChange: vi.fn() }),
     useTransform: () => ({ get: vi.fn() }),
+}));
+
+// Mock the API service entirely for clean tests
+vi.mock('../services/api', () => ({
+    api: {
+        checkHealth: vi.fn(),
+        shorten: vi.fn()
+    }
 }));
 
 beforeEach(() => {
     vi.clearAllMocks();
-    // Force connectivity failure for all tests to ensure Demo Mode is active
-    vi.stubGlobal('fetch', vi.fn(() => Promise.reject('Simulated connectivity failure')));
+    // Default to unreachable for all tests to trigger Demo Mode
+    (api.checkHealth as any).mockResolvedValue(false);
+    (api.shorten as any).mockResolvedValue('http://demo.archlinks.com/abcde');
 });
 
 test('renders headline', async () => {
     render(<App />)
     expect(screen.getByRole('heading', { name: /ARCHITECTURAL/i })).toBeInTheDocument()
-    // Always wait for the initial async effect to finish to prevent act() warnings
+    // Wait for Demo Mode indicator
     await screen.findByText(/DEMO MODE ACTIVE/i, {}, { timeout: 10000 })
-})
-
-test('activates demo mode when backend is unreachable', async () => {
-    render(<App />)
-    const demoBadge = await screen.findByText(/DEMO MODE ACTIVE/i, {}, { timeout: 10000 })
-    expect(demoBadge).toBeInTheDocument()
 })
 
 test('updates input value on change', async () => {
@@ -40,6 +44,11 @@ test('updates input value on change', async () => {
 })
 
 test('generates mock URL in demo mode', async () => {
+    // For this test, we want to ensure it works even if the 800ms delay exists.
+    // However, since we are in Demo Mode, we can't easily skip the delay without fake timers
+    // unless we mock the whole hook or the Promise.
+    // For stability in CI, let's use a long findBy timeout.
+
     render(<App />)
     await screen.findByText(/DEMO MODE ACTIVE/i, {}, { timeout: 10000 })
 
@@ -49,7 +58,6 @@ test('generates mock URL in demo mode', async () => {
     fireEvent.change(input, { target: { value: 'https://google.com' } })
     fireEvent.click(button)
 
-    // Using findByTestId for the result display
     const result = await screen.findByTestId('short-url-display', {}, { timeout: 10000 })
     expect(result).toHaveTextContent(/demo\.archlinks\.com/i)
 })
@@ -70,7 +78,6 @@ test('share button calls navigator.share', async () => {
     fireEvent.change(input, { target: { value: 'https://google.com' } })
     fireEvent.click(button)
 
-    // Wait for the share button via Test ID
     const shareButton = await screen.findByTestId('share-button', {}, { timeout: 10000 })
     fireEvent.click(shareButton)
 

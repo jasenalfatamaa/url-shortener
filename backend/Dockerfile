@@ -19,4 +19,4 @@ RUN PYTHONPATH=. pytest tests/test_app.py
 EXPOSE 5003
 
 # Command untuk menjalankan aplikasi
-CMD ["python", "app.py"]
+CMD ["python", "run.py"]

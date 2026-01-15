@@ -8,7 +8,9 @@ os.environ['DB_PASSWORD'] = 'test'
 os.environ['DB_NAME'] = 'test'
 os.environ['LIMITER_STORAGE_URI'] = 'redis://localhost:6379'
 
-from app import create_app, db, URLMapping
+from app import create_app
+from app.extensions import db
+from app.models import URLMapping
 
 @pytest.fixture
 def app():
